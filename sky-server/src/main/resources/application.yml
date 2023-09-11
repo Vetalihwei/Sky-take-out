@@ -31,6 +31,11 @@ logging:
         controller: info
 
 sky:
+  alioss:
+    endpoint: oss-cn-guangzhou.aliyuncs.com
+    access-key-id: LTAI5t5nmA1GsgnvQCvkzq2u
+    access-key-secret: 3mZtanse0kczxhoe0JN8TddAzbXWq8
+    bucket-name: web-tlias-pptp
   jwt:
     # 设置jwt签名加密时使用的秘钥
     admin-secret-key: itcast
