@@ -8,11 +8,23 @@
             (#{sd.setmealId},#{sd.dishId},#{sd.name},#{sd.price},#{sd.copies})
         </foreach>
     </insert>
+    <delete id="deleteBatchBySetmealId">
+        delete from setmeal_dish where setmeal_id in
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </delete>
+
     <select id="getsetmealIdByDishIds" resultType="java.lang.Long">
         select setmeal_id from setmeal_dish where dish_id in
         <foreach collection="ids" item="id" separator="," open="(" close=")">
             #{id}
         </foreach>
+    </select>
+    <select id="countStopDishBySetmealId" resultType="java.lang.Integer">
+        select count(d.status)
+        from setmeal_dish sd left join dish d on sd.dish_id = d.id
+        where d.status=0;
     </select>
 
 </mapper>

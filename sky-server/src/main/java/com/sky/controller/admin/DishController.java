@@ -10,6 +10,7 @@ import com.sky.vo.DishVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import lombok.extern.slf4j.Slf4j;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RestController
+@RestController("adminDishController")
 @Slf4j
 @Tag(name = "菜品管理")
 @RequestMapping("/admin/dish")
@@ -26,6 +27,13 @@ public class DishController {
     @Autowired
     DishService dishService;
 
+
+    @Operation(summary = "菜品停售起售")
+    @PostMapping("/status/{status}")
+    public Result<String> openOrstop(@PathVariable Integer status,Long id){
+        dishService.openOrstop(status,id);
+        return Result.success("操作成功");
+    }
 
     @Operation(summary = "根据分类id查询菜品")
     @GetMapping("/list")

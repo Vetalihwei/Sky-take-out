@@ -12,6 +12,14 @@ spring:
     username: ${sky.datasource.username}
     password: ${sky.datasource.password}
     druid:
+  data:
+    redis:
+      host: 192.168.52.129
+      port: 6379
+      database: 0
+      password: 123456
+
+
 
 
 mybatis:
@@ -44,6 +52,12 @@ sky:
     # 设置前端传递过来的令牌名称
     admin-token-name: token
     # springdoc-openapi项目配置
+    user-secret-key: itheima
+    user-ttl: 7200000
+    user-token-name: authentication
+  wechat:
+    appid: wxa45f32c97d2e56bb
+    secret: af8877bef6b1e6aedac8307e250f01b7
 
     #springdoc相关配置
     springdoc:
@@ -65,5 +79,6 @@ sky:
       enable: true
       setting:
         language: zh_cn
+
 
 
