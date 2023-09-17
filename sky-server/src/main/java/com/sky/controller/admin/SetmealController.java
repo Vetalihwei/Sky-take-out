@@ -11,6 +11,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.*;
 
 @RestController("adminSetmealController")
@@ -31,12 +33,13 @@ public class SetmealController {
 
     @Operation(summary = "修改套餐")
     @PutMapping
+    @CacheEvict(cacheNames = "setmealCache",allEntries = true)
     public Result<String> update(@RequestBody SetmealDTO setmealDTO){
         setmealService.updateWithSetmealDish(setmealDTO);
         return Result.success("修改成功");
     }
 
-
+    @CacheEvict(cacheNames = "setmealCache",allEntries = true)
     @Operation(summary = "套餐停售起售")
     @PostMapping("/status/{status}")
     public Result<String> openOrstop(@PathVariable Integer status,Long id){
@@ -44,6 +47,7 @@ public class SetmealController {
         return Result.success("操作成功");
     }
 
+    @CacheEvict(cacheNames = "setmealCache",allEntries = true)
     @Operation(summary = "批量删除套餐")
     @DeleteMapping
     public Result<String> deleteBatch(Long[] ids){
