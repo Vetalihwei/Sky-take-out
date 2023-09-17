@@ -56,8 +56,8 @@ sky:
     user-ttl: 7200000
     user-token-name: authentication
   wechat:
-    appid: wxa45f32c97d2e56bb
-    secret: af8877bef6b1e6aedac8307e250f01b7
+    appid: 
+    secret: 
 
     #springdoc相关配置
     springdoc:
