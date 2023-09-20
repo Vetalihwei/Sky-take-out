@@ -19,6 +19,7 @@ import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -221,6 +222,51 @@ public class OrderServiceImpl implements OrderService {
                 .status(Orders.COMPLETED)
                 .build();
         orderMapper.update(orders);
+    }
+
+    @Override
+    public PageResult historyOrders(Integer pageNum, Integer pageSize,Integer status) {
+        PageHelper.startPage(pageNum,pageSize);
+        OrdersPageQueryDTO ordersPageQueryDTO=new OrdersPageQueryDTO();
+        ordersPageQueryDTO.setUserId(BaseContext.getCurrentId());
+        ordersPageQueryDTO.setStatus(status);
+        Page<Orders> orders = orderMapper.pageQuery(ordersPageQueryDTO);
+        List<OrderVO> list = new ArrayList<>();
+        for (Orders order : orders) {
+            OrderVO orderVO=new OrderVO();
+            BeanUtils.copyProperties(order,orderVO);
+            List<OrderDetail> orderDetailList=orderDetailMapper.getByOrderId(order.getId());
+            orderVO.setOrderDetailList(orderDetailList);
+            list.add(orderVO);
+        }
+        PageResult pageResult=new PageResult(orders.getTotal(),list);
+        return pageResult;
+    }
+
+    @Override
+    public void cancelUser(Long id) {
+        Orders orders=orderMapper.getById(id);
+        if(orders.getStatus()>2){
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+        orders.setStatus(Orders.CANCELLED);
+        orders.setCancelTime(LocalDateTime.now());
+        orders.setCancelReason("用户取消");
+        orderMapper.update(orders);
+    }
+
+    @Override
+    public void repetition(Long id) {
+        Long userId=BaseContext.getCurrentId();
+        List<OrderDetail> orderDetailList=orderDetailMapper.getByOrderId(id);
+        List<ShoppingCart> shoppingCartList=orderDetailList.stream().map(x->{
+            ShoppingCart shoppingCart = new ShoppingCart();
+            BeanUtils.copyProperties(x,shoppingCart,"id");
+            shoppingCart.setUserId(id);
+            shoppingCart.setCreateTime(LocalDateTime.now());
+            return shoppingCart;
+        }).collect(Collectors.toList());
+        shoppingCartMapper.insertBatch(shoppingCartList);
     }
 
     private List<OrderVO> getOrderVOList(Page<Orders> page) {

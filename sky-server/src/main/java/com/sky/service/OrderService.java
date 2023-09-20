@@ -28,4 +28,10 @@ public interface OrderService {
     void delivery(Long id);
 
     void complete(Long id);
+
+    PageResult historyOrders(Integer pageNum, Integer pageSize,Integer status);
+
+    void cancelUser(Long id);
+
+    void repetition(Long id);
 }
