@@ -1,20 +1,24 @@
 package com.sky.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
 import com.sky.context.BaseContext;
-import com.sky.dto.OrdersPaymentDTO;
-import com.sky.dto.OrdersSubmitDTO;
+import com.sky.dto.*;
 import com.sky.entity.*;
 import com.sky.exception.AddressBookBusinessException;
 import com.sky.exception.OrderBusinessException;
 import com.sky.exception.ShoppingCartBusinessException;
 import com.sky.mapper.*;
 import com.sky.properties.WeChatProperties;
+import com.sky.result.PageResult;
 import com.sky.service.OrderService;
 import com.sky.utils.WeChatPayUtil;
 import com.sky.vo.OrderPaymentVO;
+import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
+import com.sky.vo.OrderVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -26,6 +30,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -133,5 +138,112 @@ public class OrderServiceImpl implements OrderService {
                 .build();
 
         orderMapper.update(orders);
+    }
+
+    @Override
+    public PageResult page(OrdersPageQueryDTO ordersPageQueryDTO) {
+        PageHelper.startPage(ordersPageQueryDTO.getPage(),ordersPageQueryDTO.getPageSize());
+        Page<Orders> page = orderMapper.pageQuery(ordersPageQueryDTO);
+        List<OrderVO> orderVOList = getOrderVOList(page);
+        return new PageResult(page.getTotal(),orderVOList);
+    }
+
+    @Override
+    public void confirm(OrdersConfirmDTO ordersConfirmDTO) {
+        Long id= ordersConfirmDTO.getId();
+        Orders orders=Orders.builder().id(id).status(Orders.CONFIRMED).build();
+        orderMapper.update(orders);
+    }
+
+    @Override
+    public void rejection(OrdersRejectionDTO ordersRejectionDTO) {
+        Orders orders=Orders.builder()
+                .id(ordersRejectionDTO.getId())
+                .status(Orders.CANCELLED)
+                .rejectionReason(ordersRejectionDTO.getRejectionReason())
+                .cancelTime(LocalDateTime.now())
+                .build();
+        orderMapper.update(orders);
+    }
+
+    @Override
+    public OrderStatisticsVO statistics() {
+        Integer waitForConfirm = orderMapper.countOrderStatus(Orders.TO_BE_CONFIRMED);
+        Integer waitForDelivery = orderMapper.countOrderStatus(Orders.CONFIRMED);
+        Integer Delivery = orderMapper.countOrderStatus(Orders.DELIVERY_IN_PROGRESS);
+        OrderStatisticsVO orderStatisticsVO = new OrderStatisticsVO();
+        orderStatisticsVO.setConfirmed(waitForDelivery);
+        orderStatisticsVO.setToBeConfirmed(waitForConfirm);
+        orderStatisticsVO.setDeliveryInProgress(Delivery);
+        return null;
+    }
+
+    @Override
+    public OrderVO detalis(Long id) {
+        OrderVO orderVO = new OrderVO();
+        Orders orders = orderMapper.getById(id);
+        BeanUtils.copyProperties(orders,orderVO);
+        List<OrderDetail> orderDetailList = orderDetailMapper.getByOrderId(id);
+        List<String> Dishes = orderDetailList.stream().map(x->{
+            String dish=x.getName()+"*"+x.getNumber().toString();
+            return dish;
+        }).collect(Collectors.toList());
+        String all = String.join(",",Dishes);
+        orderVO.setOrderDishes(all);
+        orderVO.setOrderDetailList(orderDetailList);
+        return orderVO;
+    }
+
+    @Override
+    public void cancel(OrdersCancelDTO ordersCancelDTO) {
+        Orders orders = Orders.builder()
+                .id(ordersCancelDTO.getId())
+                .cancelReason(ordersCancelDTO.getCancelReason())
+                .cancelTime(LocalDateTime.now())
+                .status(Orders.CANCELLED)
+                .build();
+        orderMapper.update(orders);
+    }
+
+    @Override
+    public void delivery(Long id) {
+        Orders orders=Orders.builder()
+                .id(id)
+                .status(Orders.DELIVERY_IN_PROGRESS)
+                .build();
+        orderMapper.update(orders);
+    }
+
+    @Override
+    public void complete(Long id) {
+        Orders orders=Orders.builder()
+                .id(id)
+                .status(Orders.COMPLETED)
+                .build();
+        orderMapper.update(orders);
+    }
+
+    private List<OrderVO> getOrderVOList(Page<Orders> page) {
+        List<Orders> ordersList=page.getResult();
+        List<OrderVO> orderVOList=new ArrayList<>();
+        if(!ordersList.isEmpty()) {
+            for (Orders orders : ordersList) {
+                OrderVO orderVO = new OrderVO();
+                BeanUtils.copyProperties(orders, orderVO);
+                String dishes = getOrderDishes(orders);
+                orderVO.setOrderDishes(dishes);
+                orderVOList.add(orderVO);
+            }
+        }
+        return orderVOList;
+    }
+
+    private String getOrderDishes(Orders orders) {
+        List<OrderDetail> orderDetailList=orderDetailMapper.getByOrderId(orders.getId());
+        List<String> orderDishes=orderDetailList.stream().map(x->{
+            String orderdish= x.getName()+"*"+x.getNumber().toString();
+            return orderdish;
+        }).collect(Collectors.toList());
+        return String.join(",",orderDishes);
     }
 }
