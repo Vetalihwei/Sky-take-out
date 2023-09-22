@@ -1,5 +1,6 @@
 package com.sky.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
@@ -19,7 +20,9 @@ import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
+import com.sky.websocket.WebSocketServer;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -30,9 +33,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class OrderServiceImpl implements OrderService {
 
@@ -48,6 +54,8 @@ public class OrderServiceImpl implements OrderService {
     UserMapper userMapper;
     @Autowired
     WeChatPayUtil weChatPayUtil;
+    @Autowired
+    WebSocketServer webSocketServer;
 
 
     @Transactional
@@ -122,11 +130,15 @@ public class OrderServiceImpl implements OrderService {
         vo.setSignType("1");
         vo.setNonceStr("1");
         vo.setTimeStamp("asd");
+        //paySuccess(ordersPaymentDTO.getOrderNumber());
+
+
         return vo;
     }
 
     public void paySuccess(String outTradeNo) {
 
+        log.info("订单提示");
         // 根据订单号查询订单
         Orders ordersDB = orderMapper.getByNumber(outTradeNo);
 
@@ -137,7 +149,12 @@ public class OrderServiceImpl implements OrderService {
                 .payStatus(Orders.PAID)
                 .checkoutTime(LocalDateTime.now())
                 .build();
-
+        Map map = new HashMap<>();
+        map.put("type",1);
+        map.put("orderId",ordersDB.getId());
+        map.put("content","订单号:"+outTradeNo);
+        String json = JSON.toJSONString(map);
+        webSocketServer.sendToAllClient(json);
         orderMapper.update(orders);
     }
 
