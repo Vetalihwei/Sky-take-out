@@ -41,8 +41,8 @@ logging:
 sky:
   alioss:
     endpoint: oss-cn-guangzhou.aliyuncs.com
-    access-key-id: LTAI5t5nmA1GsgnvQCvkzq2u
-    access-key-secret: 3mZtanse0kczxhoe0JN8TddAzbXWq8
+    access-key-id: 
+    access-key-secret: 
     bucket-name: web-tlias-pptp
   jwt:
     # 设置jwt签名加密时使用的秘钥
@@ -56,8 +56,8 @@ sky:
     user-ttl: 7200000
     user-token-name: authentication
   wechat:
-    appid: wxa45f32c97d2e56bb
-    secret: af8877bef6b1e6aedac8307e250f01b7
+    appid: 
+    secret: 
 
     #springdoc相关配置
     springdoc:
